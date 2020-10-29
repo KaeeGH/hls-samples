@@ -40,7 +40,7 @@ function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
         parser.manifest.segments
       )
       getTsFiles(segments)
-      sleep(maxduration - 2)
+      sleep(maxduration - 5)
       reloadm3u8(maxduration, srcUrl, parser)
     })
     .catch((err) => console.log(err))
@@ -57,6 +57,7 @@ function main(): void {
       parser.push(res.data)
       console.log(parser.manifest.targetDuration)
       getTsFiles(parser.manifest.segments)
+      sleep(parser.manifest.targetDuration - 5)
       reloadm3u8(parser.manifest.targetDuration, srcUrl, parser)
     })
     .catch((err) => console.log(err))
