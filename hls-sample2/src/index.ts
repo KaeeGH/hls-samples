@@ -1,4 +1,5 @@
 import { Parser } from 'm3u8-parser'
+import * as fs from 'fs'
 import axios from 'axios'
 import { sleep } from './utils'
 import { segment } from './interfaces'
@@ -13,7 +14,7 @@ function getTsFiles(segments: Array<segment>): void {
         headers: { 'content-Type': 'video/mp2t' },
       })
       .then((res) => {
-        console.log(segment.uri + ' ' + res.status)
+        console.log(res.status)
         console.log(res.data)
       })
       .catch((err) => console.log(err))
