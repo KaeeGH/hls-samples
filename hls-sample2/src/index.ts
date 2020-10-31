@@ -8,8 +8,14 @@ function getTsFiles(segments: Array<segment>): void {
   for (const segment of segments) {
     uris.push(segment.uri)
     axios
-      .get(segment.uri)
-      .then((res) => console.log(segment.uri + ' ' + res.status))
+      .get(segment.uri, {
+        responseType: 'arraybuffer',
+        headers: { 'content-Type': 'video/mp2t' },
+      })
+      .then((res) => {
+        console.log(segment.uri + ' ' + res.status)
+        console.log(res.data)
+      })
       .catch((err) => console.log(err))
   }
 }
@@ -48,8 +54,7 @@ function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
 
 function main(): void {
   const srcUrl =
-    'https://video-weaver.tyo01.hls.ttvnw.net/v1/playlist/CoMFu0dnbdzucFfvUAO5zJpJyNsXz3HkUOgikbireAUtN0-DzirY56R4KfBgf6pg2bxnvFVY7LPrQ5kShjhJp_MYrycdRgwwFhuOrw2vAQY-PwqGAT_a5QmERZEWkEnSaMIIS1PicrFlojeYszHGqCIzDALrGdBc1_GpIz2MAW00leAF-IOrMJFCgvUhThh0t27zHLSVM3tvTjsQcLJTLorZAlxOaWuykDEULyuXT1Bup4uW-wzx_HZbBwwFkzXl2mr_Sye0qaOdH3CNM_un1mvMpN8tRstqfo8drnjBW1KMaPunI2942JFoND3gDcjNMQNULdSQwCPys115IA-EFJRlpYeuFMmbnP7_m09BLJbLcjWZJF7LU3VD8d-OASNsPpAJHSl5dBos7LyW1bPZaaABmGXjRmesLWLMd1Mgk6Ex9ObJKGg5buPaB2JzKbB7oKqEfRUNfA_H_HxFvR96wdd0U5BW4GwnFC1MNLoRIYZx7JJ3SrCkhfpdp4VkgnMwY5yv8Fo6_qTS8KDJfWHSZ5qsO7stpzilJKekqvGuDPdIhNbMnrmZGWEHlmOHhQG7ht8v49OFS5iy6LwCfQCib9w1574LoZ3T1bHwBo396pqjnssrvsQj7EJCXfsvOrwXilhfjNa8cLL44jGYTfSrTSUspDuWpnr9mzyBm9O1lgrY6WcMrCiQFWX8cZKNRxnhdmlTb6XE6VfCK448MuWQMZMfrSVugSsYSLlSx_nfa-_s7DAvyFkbICUNR2FQacGsawB2tH18aAs80ha1tOSlfQ8vQQGlcR4cpr5piy8ubvL7o_mf4InVu7eHPYN9c8NW-MwMw6rf7KWdipMwVOflCQgfYofwXBIQ0xO_BRgxBxf0kzwnz4Y-_xoMD-Y30wm3vZfSgZsb.m3u8'
-  console.log('start')
+    'https://video-weaver.tyo01.hls.ttvnw.net/v1/playlist/CqEFU9l2eGzMEZvhOw3saqJ0GBiQSoyj33Htdok9erxN8lz9bKeT5GGUQIeQ4yyvHu5xGU7dAl1XBhd6nLcpMGJIWcyn1-IdkYXPZF0FXoUAi1BJgyTMyQL2Ki2qnZnQt_uJrE6xM1gc0MhHCBmgLhQhSyGTAitHF2JzmmIh5VLCi6HhuAt4GGILUaaMbVxDZ58yD9XQ8BGIwLMUrkn-NELHvoJZ8DjUMBtP0UGfZqJdg2xFEM4-pLBaEipZkToqDsP0HF9ROSdzqewcqLcde1aWYFxF_Hg0c2R7uJ0PyFGZ6iOV-Hprk8fqJfv5BajeNTdEphVAqE8Q6PeoDSAwUspQurtkVdf7yme58DQShnZ8CJOez8ti7kPq6N6SJlw9nad2I28E7E5ezOwUdXS9G2ByUDNg4Km9HNPIYBY38-BYceG19vOuGZfMGlLqBfHBIvScmD38u9tXKnxnZL0j5ympn6WvoGQz6lHC94dJbHkwNaehpvC_zWQp_O7xYcLeCaUIU6tQOBazgOh6P1CpXzVez8hKAKzzLmMHvxPeI5eGMqydx7MaXLnASgD72UcFMCZTGDmWA8SFraq0KLuibcj1GSI4J6qQYxxgk452NTnWiq7cJuUFk6YNLbspg4nHwVWtJjhIeYTzXBMIfdIJrzL_8eZJDmQaKfNVUONXx6PbJUDfvHIAW5d0pkgYGsHyp9WnORf_gM4cbuI9jGT0TEbH5hI-hQBKN5jjB9Ew-T2tlbSRg-Zf6L1s3M7mzx0SM3s8lPC5MpSs1kYbtbva7REK5SoOboHdWAB-eYTBJCPhvPXnD5302MMv3Dok577Bilievp9oj03dhV1uU5sttZeanf62Ht8GzUAdLwHedMp9HctdSGB3rIbl_IZcO2CPjM_GpRIQYWoJTdNQuUXYSknY9tmEGRoM3BoFW8FMwOfhQG1Y.m3u8'
   const parser = new Parser()
   axios
     .get<string>(srcUrl)
