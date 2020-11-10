@@ -22,6 +22,8 @@
     "axios": "^0.21.0",
     "fs": "^0.0.1-security",
     "m3u8-parser": "^4.4.3",
-    "package.json": "^2.0.1"
+    "mpeg2ts-parser": "^1.0.2",
+    "package.json": "^2.0.1",
+    "stream": "^0.0.2"
   }
 }

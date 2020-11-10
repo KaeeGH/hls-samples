@@ -11,8 +11,10 @@ function main(): void {
   const m2ts = fs.createReadStream('0.ts', { encoding: null })
   let count = 0
   parser.on('data', (data) => {
-    console.log(count)
-    console.log(data.payload)
+    if (count <= 3) {
+      console.log(count)
+      console.log(data)
+    }
     writePayloadBinFile(data.payload, count)
     count++
   })
