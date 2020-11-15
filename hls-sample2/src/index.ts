@@ -85,7 +85,7 @@ function main(): void {
       //console.log(parser.manifest.targetDuration)
       getTsFiles(parser.manifest.segments)
       //sleep(parser.manifest.targetDuration - 5)
-      reloadm3u8(parser.manifest.targetDuration, srcUrl, parser)
+      //reloadm3u8(parser.manifest.targetDuration, srcUrl, parser)
     })
     .catch((err) => console.log(err))
 }
