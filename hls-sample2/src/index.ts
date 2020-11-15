@@ -56,7 +56,9 @@ function deleteDuplication(segments: Array<segment>): Array<segment> {
 //再帰関数にすればよさげ
 function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
   axios
-    .get<string>(srcUrl, { headers: { 'content-Type': 'video/mp2t' } })
+    .get<string>(srcUrl, {
+      headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
+    })
     .then((res) => {
       parser.push(res.data)
       console.log('fetched')
@@ -75,7 +77,9 @@ function main(): void {
     'https://video-weaver.tyo01.hls.ttvnw.net/v1/playlist/Cp8FKJtWn0kABHFALEGnUvtxJRiIB74nzz48B_Og8OzblpfannFlxOjKJO8nc-dONL6Anbi7S92NjRShcxWf4P3WYWRXaHV4GAwtAb6gRg-KPcRkf7GIUHHyd-MsJxSpjg4xzE4_nq2_sYyYCw1_o4ktWa5f-q0ybyXn-9pnbxRw4EEQaYL7zERdT4YUDHjLHUsCvLs7amoGaTkrt70RHSqkPfDMVnrpd6IYYv6oQH1N6861umA-DSbSc1DPibU-56R1RvQPLc-iZPFQv27qU1UqJj9e9rwTQ2vx7696dQm8LI35DeO51DaX59pOUNNHL8AhJUPoWMsf4kS0gsBxTNvEXM0rglD9tOaZkToCexJ-ZS39PnXoPwl9FrYz7nc3IrNLE_4b_9xr767kdvqFeFma65tw2UAyYThvFoXUDp7WKJ7ViJ_16eMMMiK8hgtTdru_NzmU-RESRSYcTYfu1-9TOrxeapPwmX1YPr7eXgKQnLPhPPsfrKvBuafkrb24w4joWxeLNkDn3VuRTDed4GEeUziWd7Q8iEnhlxNblu9Qf_UKgfXd4czi7J0yEyB-5KcUO9ObkJzY63IHicwwnXQHN_iDDPEa8JmHpu1eBk_jBHsebccuj9jve-XICUEP9WlMvcKw2B9xXJgOq2wx1HXVwTcJJSaad2Fa-yZJZHTt-lzqc8ozFu279YjRYEC1fBALhJgf110PVUWaHm7yoRl03jJk0yIEFZOJRYSnGJ4LoQzUwnpjNbku8_2nVqfxii5mJA3cdsQwvwDZTW1VBH8N6NI9o1Z5ywjUDgX2wLlOTA9cn17jXNiKXtfzthGgvsKUvh4s5xgFwaldc-bh-7dPLgxVEwqPBY9snvgy3Z_JxblbvUmANmJu7noL94LPWOwSEEOhiV1PhwH1ur7P9LKOh2gaDP1ZRibmO57wxQRhgQ.m3u8'
   const parser = new Parser()
   axios
-    .get<string>(srcUrl, { headers: { 'content-Type': 'video/mp2t' } })
+    .get<string>(srcUrl, {
+      headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
+    })
     .then((res) => {
       parser.push(res.data)
       //console.log(parser.manifest.targetDuration)
