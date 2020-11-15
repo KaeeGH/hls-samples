@@ -1,0 +1,31 @@
+#EXTM3U
+#EXT-X-TARGETDURATION:1
+#EXT-X-MEDIA-SEQUENCE:0
+
+#EXTINF:1, no-desc
+0.ts
+#EXTINF:1, no-desc
+1.ts
+#EXTINF:1, no-desc
+2.ts
+#EXTINF:1, no-desc
+3.ts
+#EXTINF:1, no-desc
+4.ts
+#EXTINF:1, no-desc
+5.ts
+#EXTINF:1, no-desc
+6.ts
+#EXTINF:1, no-desc
+7.ts
+#EXTINF:1, no-desc
+8.ts
+#EXTINF:1, no-desc
+9.ts
+#EXTINF:1, no-desc
+10.ts
+#EXTINF:1, no-desc
+11.ts
+#EXTINF:1, no-desc
+12.ts
+#EXT-X-ENDLIST
