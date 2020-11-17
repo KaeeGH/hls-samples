@@ -31,11 +31,11 @@ function parseTsFile(tsFile: ArrayBuffer) {
   readable.push(null)
   parser.setMaxListeners(10000)
   parser.on('data', (data) => {
-    console.log(data)
+    console.log(data.packet)
     decoder.push(data.packet)
   })
   readable.pipe(parser)
-  readable.destroy()
+  //readable.destroy()
 }
 
 function getTsFiles(segments: Array<segment>): void {
