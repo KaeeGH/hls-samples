@@ -5,58 +5,27 @@ import axios from 'axios'
 import { sleep } from './utils'
 import { segment } from './interfaces'
 import { Encoder, Decoder } from 'ts-coder'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const parser = require('mpeg2ts-parser')()
-const decoder = new Decoder({
-  headSize: 4,
-  isEnd(head) {
-    return true
-  },
-})
 
 function writeBinFile(payload: ArrayBuffer, count: number) {
   const arrayBuffed = new Uint8Array(payload)
   fs.writeFileSync(String(count) + 'head.bin', arrayBuffed)
 }
 
-function parseTsFile(tsFile: ArrayBuffer) {
-  const readable = new Readable()
-
-  // decoder.onData((buffer) => {
-  //   console.log('loaded')
-  // })
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  readable._read = () => {}
-  readable.push(tsFile)
-  readable.push(null)
-  parser.setMaxListeners(10000)
-  parser.on('data', (data) => {
-    console.log(data.packet)
-    decoder.push(data.packet)
-  })
-  readable.pipe(parser)
-  //readable.destroy()
+function parseTsFile(tsFile: ArrayBuffer, decoder: Decoder) {
+  decoder.push(Buffer.from(tsFile))
 }
 
-function getTsFiles(segments: Array<segment>): void {
-  const uris: Array<string> = []
-  let count = 0
+async function getTsFiles(
+  segments: Array<segment>,
+  onFetched: (data: ArrayBuffer) => void
+): Promise<void> {
   for (const segment of segments) {
-    uris.push(segment.uri)
-    count++
     //相対パスと絶対パスの場合があるのでそれに対応する必要がある
-    axios
-      .get('http://localhost:3000/' + segment.uri, {
-        responseType: 'arraybuffer',
-        headers: { 'content-Type': 'video/mp2t' },
-      })
-      .then((res) => {
-        // console.log(count)
-        // console.log(res.status)
-        //console.log(res.data)
-        parseTsFile(res.data)
-      })
-      .catch((err) => console.log(err))
+    const res = await axios.get('http://localhost:3000/' + segment.uri, {
+      responseType: 'arraybuffer',
+      headers: { 'content-Type': 'video/mp2t' },
+    })
+    onFetched(res.data)
   }
 }
 
@@ -87,7 +56,7 @@ function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
       const segments: Array<segment> = deleteDuplication(
         parser.manifest.segments
       )
-      getTsFiles(segments)
+      //getTsFiles(segments)
       sleep(maxduration - 5)
       reloadm3u8(maxduration, srcUrl, parser)
     })
@@ -97,6 +66,19 @@ function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
 function main(): void {
   const srcUrl = 'http://localhost:3000/test0.m3u8'
   const parser = new Parser()
+  const decoder = new Decoder({
+    headSize: 4,
+    isEnd(head) {
+      return head[0] === 0x02
+    },
+  })
+
+  decoder.onData((buffer) => {
+    console.log(buffer)
+    const arrayBuffed = new Uint8Array(buffer)
+    fs.writeFileSync('test0.jpg', arrayBuffed)
+  })
+
   axios
     .get<string>(srcUrl, {
       headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
@@ -104,7 +86,9 @@ function main(): void {
     .then((res) => {
       parser.push(res.data)
       //console.log(parser.manifest.targetDuration)
-      getTsFiles(parser.manifest.segments)
+      getTsFiles(parser.manifest.segments, (data: ArrayBuffer) =>
+        parseTsFile(data, decoder)
+      )
       //sleep(parser.manifest.targetDuration - 5)
       //reloadm3u8(parser.manifest.targetDuration, srcUrl, parser)
     })
