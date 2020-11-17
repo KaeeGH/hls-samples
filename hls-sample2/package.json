@@ -24,6 +24,7 @@
     "m3u8-parser": "^4.4.3",
     "mpeg2ts-parser": "^1.0.2",
     "package.json": "^2.0.1",
-    "stream": "^0.0.2"
+    "stream": "^0.0.2",
+    "ts-coder": "^0.0.2"
   }
 }

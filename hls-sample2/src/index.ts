@@ -4,17 +4,35 @@ import * as fs from 'fs'
 import axios from 'axios'
 import { sleep } from './utils'
 import { segment } from './interfaces'
+import { Encoder, Decoder } from 'ts-coder'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const parser = require('mpeg2ts-parser')()
+const decoder = new Decoder({
+  headSize: 4,
+  isEnd(head) {
+    return true
+  },
+})
+
+function writeBinFile(payload: ArrayBuffer, count: number) {
+  const arrayBuffed = new Uint8Array(payload)
+  fs.writeFileSync(String(count) + 'head.bin', arrayBuffed)
+}
 
 function parseTsFile(tsFile: ArrayBuffer) {
   const readable = new Readable()
+
+  // decoder.onData((buffer) => {
+  //   console.log('loaded')
+  // })
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   readable._read = () => {}
   readable.push(tsFile)
   readable.push(null)
+  parser.setMaxListeners(10000)
   parser.on('data', (data) => {
-    console.log(data.payload)
+    console.log(data)
+    decoder.push(data.packet)
   })
   readable.pipe(parser)
   readable.destroy()
@@ -22,8 +40,10 @@ function parseTsFile(tsFile: ArrayBuffer) {
 
 function getTsFiles(segments: Array<segment>): void {
   const uris: Array<string> = []
+  let count = 0
   for (const segment of segments) {
     uris.push(segment.uri)
+    count++
     //相対パスと絶対パスの場合があるのでそれに対応する必要がある
     axios
       .get('http://localhost:3000/' + segment.uri, {
@@ -31,7 +51,8 @@ function getTsFiles(segments: Array<segment>): void {
         headers: { 'content-Type': 'video/mp2t' },
       })
       .then((res) => {
-        console.log(res.status)
+        // console.log(count)
+        // console.log(res.status)
         //console.log(res.data)
         parseTsFile(res.data)
       })
