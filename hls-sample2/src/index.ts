@@ -45,7 +45,12 @@ function deleteDuplication(segments: Array<segment>): Array<segment> {
 }
 
 //再帰関数にすればよさげ
-function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
+function reloadm3u8(
+  maxduration: number,
+  srcUrl: string,
+  parser: Parser,
+  decoder: Decoder
+) {
   axios
     .get<string>(srcUrl, {
       headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
@@ -56,27 +61,33 @@ function reloadm3u8(maxduration: number, srcUrl: string, parser: Parser) {
       const segments: Array<segment> = deleteDuplication(
         parser.manifest.segments
       )
-      //getTsFiles(segments)
+      getTsFiles(segments, (data: ArrayBuffer) => parseTsFile(data, decoder))
       sleep(maxduration - 5)
-      reloadm3u8(maxduration, srcUrl, parser)
+      reloadm3u8(maxduration, srcUrl, parser, decoder)
     })
     .catch((err) => console.log(err))
 }
 
 function main(): void {
   const srcUrl = 'http://localhost:3000/test0.m3u8'
+  let count = 0
   const parser = new Parser()
   const decoder = new Decoder({
     headSize: 4,
     isEnd(head) {
-      return head[0] === 0x02
+      if (head[0] === 0x02) {
+        return true
+      } else {
+        return false
+      }
     },
   })
 
   decoder.onData((buffer) => {
     console.log(buffer)
     const arrayBuffed = new Uint8Array(buffer)
-    fs.writeFileSync('test0.jpg', arrayBuffed)
+    fs.writeFileSync(`test${count}.jpg`, arrayBuffed)
+    count++
   })
 
   axios
@@ -89,8 +100,8 @@ function main(): void {
       getTsFiles(parser.manifest.segments, (data: ArrayBuffer) =>
         parseTsFile(data, decoder)
       )
-      //sleep(parser.manifest.targetDuration - 5)
-      //reloadm3u8(parser.manifest.targetDuration, srcUrl, parser)
+      sleep(parser.manifest.targetDuration - 5)
+      reloadm3u8(parser.manifest.targetDuration, srcUrl, parser, decoder)
     })
     .catch((err) => console.log(err))
 }
