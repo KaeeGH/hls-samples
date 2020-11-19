@@ -44,6 +44,18 @@ function deleteDuplication(segments: Array<segment>): Array<segment> {
   }
 }
 
+let proccessedSegments: Array<segment>;
+
+function removeProcessed(segments: Array<segment>): Array<segment> {
+  const removed: Array<segment> = []
+  for (const index in segments) {
+    if (!(segments[index] === proccessedSegments[index])) {
+      removed.push(segments[index])
+    }
+  }
+  return removed
+}
+
 //再帰関数にすればよさげ
 function reloadm3u8(
   maxduration: number,
@@ -61,9 +73,13 @@ function reloadm3u8(
       const segments: Array<segment> = deleteDuplication(
         parser.manifest.segments
       )
-      getTsFiles(segments, (data: ArrayBuffer) => parseTsFile(data, decoder))
-      sleep(maxduration - 5)
-      reloadm3u8(maxduration, srcUrl, parser, decoder)
+      proccessedSegments = proccessedSegments.concat(segments)
+      const toFetch: Array<segment> = removeProcessed(segments)
+      if (toFetch.length !== 0) {
+        getTsFiles(toFetch, (data: ArrayBuffer) => parseTsFile(data, decoder))
+        sleep(maxduration - 5)
+        reloadm3u8(maxduration, srcUrl, parser, decoder)
+      }
     })
     .catch((err) => console.log(err))
 }
@@ -100,6 +116,7 @@ function main(): void {
       getTsFiles(parser.manifest.segments, (data: ArrayBuffer) =>
         parseTsFile(data, decoder)
       )
+      proccessedSegments = parser.manifest.segments
       sleep(parser.manifest.targetDuration - 5)
       reloadm3u8(parser.manifest.targetDuration, srcUrl, parser, decoder)
     })
