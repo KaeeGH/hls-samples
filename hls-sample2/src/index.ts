@@ -30,7 +30,6 @@ function getTsFiles(segments: Array<segment>, decoder: Decoder) {
 function deleteDuplication(segments: Array<segment>): Array<segment> {
   const removed: Array<segment> = []
   for (const index in segments) {
-    console.log(segments[index])
     if (parseInt(index) === 0) {
       removed.push(segments[index])
     } else {
@@ -81,19 +80,17 @@ function reloadm3u8(
       // console.log('fetched')
       // console.log(parser.manifest.segments)
       const fetchedSegments = parser.manifest.segments
-      //const segments: Array<segment> = deleteDuplication(fetchedSegments)
-      // const toFetch: Array<segment> = removeProcessed(
-      //   parser.manifest.segments,
-      //   proccessedSegments
-      // )
-      // console.log(parser.manifest.segments)
-      // console.log(toFetch.length)
-      // if (toFetch.length !== 0) {
-      //   getTsFiles(toFetch, decoder)
-      //   proccessedSegments = proccessedSegments.concat(toFetch)
-      //   sleep(maxduration - 5)
-      //   reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
-      // }
+      const segments: Array<segment> = deleteDuplication(fetchedSegments)
+      const toFetch: Array<segment> = removeProcessed(
+        segments,
+        proccessedSegments
+      )
+      if (toFetch.length !== 0) {
+        getTsFiles(toFetch, decoder)
+        proccessedSegments = proccessedSegments.concat(toFetch)
+        sleep(maxduration - 5)
+        reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
+      }
     })
 }
 
