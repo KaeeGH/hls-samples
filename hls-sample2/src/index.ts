@@ -15,38 +15,46 @@ function parseTsFile(tsFile: ArrayBuffer, decoder: Decoder) {
   decoder.push(Buffer.from(tsFile))
 }
 
-async function getTsFiles(
-  segments: Array<segment>,
-  onFetched: (data: ArrayBuffer) => void
-): Promise<void> {
+function getTsFiles(segments: Array<segment>, decoder: Decoder) {
   for (const segment of segments) {
     //相対パスと絶対パスの場合があるのでそれに対応する必要がある
-    const res = await axios.get('http://localhost:3000/' + segment.uri, {
-      responseType: 'arraybuffer',
-      headers: { 'content-Type': 'video/mp2t' },
-    })
-    onFetched(res.data)
+    axios
+      .get('http://localhost:3000/' + segment.uri, {
+        responseType: 'arraybuffer',
+        headers: { 'content-Type': 'video/mp2t' },
+      })
+      .then((res) => parseTsFile(res.data, decoder))
   }
 }
 
 function deleteDuplication(segments: Array<segment>): Array<segment> {
-  try {
-    for (const index in segments) {
-      for (const segment of segments) {
-        if (segments[index].uri == segment.uri) {
-          segments.splice(parseInt(index), 1)
+  const removed: Array<segment> = []
+  for (const index in segments) {
+    console.log(segments[index])
+    if (parseInt(index) === 0) {
+      removed.push(segments[index])
+    } else {
+      //すでに同じデータが入力されていないかを確かめる
+      let duplecated: boolean
+      duplecated = false
+      for (const j in removed) {
+        if (segments[index].uri === removed[j].uri) {
+          duplecated = true
         }
       }
+      //同じデータがなければ追加
+      if (!duplecated) {
+        removed.push(segments[index])
+      }
     }
-    return segments
-  } catch (err) {
-    return segments
   }
+  return removed
 }
 
-let proccessedSegments: Array<segment>;
-
-function removeProcessed(segments: Array<segment>): Array<segment> {
+function removeProcessed(
+  segments: Array<segment>,
+  proccessedSegments: Array<segment>
+): Array<segment> {
   const removed: Array<segment> = []
   for (const index in segments) {
     if (!(segments[index] === proccessedSegments[index])) {
@@ -61,7 +69,8 @@ function reloadm3u8(
   maxduration: number,
   srcUrl: string,
   parser: Parser,
-  decoder: Decoder
+  decoder: Decoder,
+  proccessedSegments: Array<segment>
 ) {
   axios
     .get<string>(srcUrl, {
@@ -69,19 +78,23 @@ function reloadm3u8(
     })
     .then((res) => {
       parser.push(res.data)
-      console.log('fetched')
-      const segments: Array<segment> = deleteDuplication(
-        parser.manifest.segments
-      )
-      proccessedSegments = proccessedSegments.concat(segments)
-      const toFetch: Array<segment> = removeProcessed(segments)
-      if (toFetch.length !== 0) {
-        getTsFiles(toFetch, (data: ArrayBuffer) => parseTsFile(data, decoder))
-        sleep(maxduration - 5)
-        reloadm3u8(maxduration, srcUrl, parser, decoder)
-      }
+      // console.log('fetched')
+      // console.log(parser.manifest.segments)
+      const fetchedSegments = parser.manifest.segments
+      //const segments: Array<segment> = deleteDuplication(fetchedSegments)
+      // const toFetch: Array<segment> = removeProcessed(
+      //   parser.manifest.segments,
+      //   proccessedSegments
+      // )
+      // console.log(parser.manifest.segments)
+      // console.log(toFetch.length)
+      // if (toFetch.length !== 0) {
+      //   getTsFiles(toFetch, decoder)
+      //   proccessedSegments = proccessedSegments.concat(toFetch)
+      //   sleep(maxduration - 5)
+      //   reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
+      // }
     })
-    .catch((err) => console.log(err))
 }
 
 function main(): void {
@@ -113,12 +126,21 @@ function main(): void {
     .then((res) => {
       parser.push(res.data)
       //console.log(parser.manifest.targetDuration)
-      getTsFiles(parser.manifest.segments, (data: ArrayBuffer) =>
-        parseTsFile(data, decoder)
+      //メインスレッドと別なメモリ空間でparserのインスタンスが管理されていてparser.push()をコールすると
+      //こちらでgetTsFileがコールされる前にコールされた場合getTsFileに不正な引数が入る
+      const fetchedSegments = parser.manifest.segments
+      const segments: Array<segment> = deleteDuplication(fetchedSegments)
+      console.log(segments)
+      getTsFiles(segments, decoder)
+      const proccessedSegments = segments
+      sleep(parser.manifest.targetDuration)
+      reloadm3u8(
+        parser.manifest.targetDuration,
+        srcUrl,
+        parser,
+        decoder,
+        proccessedSegments
       )
-      proccessedSegments = parser.manifest.segments
-      sleep(parser.manifest.targetDuration - 5)
-      reloadm3u8(parser.manifest.targetDuration, srcUrl, parser, decoder)
     })
     .catch((err) => console.log(err))
 }
