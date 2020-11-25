@@ -15,15 +15,25 @@ function parseTsFile(tsFile: ArrayBuffer, decoder: Decoder) {
   decoder.push(Buffer.from(tsFile))
 }
 
-function getTsFiles(segments: Array<segment>, decoder: Decoder) {
+async function getTsFiles(segments: Array<segment>, decoder: Decoder) {
   for (const segment of segments) {
+    //console.log(segment.uri)
     //相対パスと絶対パスの場合があるのでそれに対応する必要がある
-    axios
-      .get('http://localhost:3000/' + segment.uri, {
-        responseType: 'arraybuffer',
-        headers: { 'content-Type': 'video/mp2t' },
-      })
-      .then((res) => parseTsFile(res.data, decoder))
+    // axios
+    //   .get('http://localhost:3000/' + segment.uri, {
+    //     responseType: 'arraybuffer',
+    //     headers: { 'content-Type': 'video/mp2t' },
+    //   })
+    //   .then((res) => {
+    //     console.log(segment.uri)
+    //     parseTsFile(res.data, decoder)
+    //   })
+    const res = await axios.get('http://localhost:3000/' + segment.uri, {
+      responseType: 'arraybuffer',
+      headers: { 'content-Type': 'video/mp2t' },
+    })
+    console.log(segment.uri)
+    parseTsFile(res.data, decoder)
   }
 }
 
@@ -85,17 +95,18 @@ function reloadm3u8(
         segments,
         proccessedSegments
       )
+      console.log(toFetch)
       if (toFetch.length !== 0) {
         getTsFiles(toFetch, decoder)
         proccessedSegments = proccessedSegments.concat(toFetch)
-        sleep(maxduration - 5)
+        //sleep(maxduration - 5)
         reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
       }
     })
 }
 
 function main(): void {
-  const srcUrl = 'http://localhost:3000/test0.m3u8'
+  const srcUrl = 'http://localhost:3000/main.m3u8'
   let count = 0
   const parser = new Parser()
   const decoder = new Decoder({
@@ -127,10 +138,10 @@ function main(): void {
       //こちらでgetTsFileがコールされる前にコールされた場合getTsFileに不正な引数が入る
       const fetchedSegments = parser.manifest.segments
       const segments: Array<segment> = deleteDuplication(fetchedSegments)
-      console.log(segments)
+      // console.log(segments)
       getTsFiles(segments, decoder)
       const proccessedSegments = segments
-      sleep(parser.manifest.targetDuration)
+      //sleep(parser.manifest.targetDuration)
       reloadm3u8(
         parser.manifest.targetDuration,
         srcUrl,
