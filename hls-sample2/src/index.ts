@@ -96,12 +96,10 @@ function reloadm3u8(
         proccessedSegments
       )
       console.log(toFetch)
-      if (toFetch.length !== 0) {
-        getTsFiles(toFetch, decoder)
-        proccessedSegments = proccessedSegments.concat(toFetch)
-        //sleep(maxduration - 5)
-        reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
-      }
+      getTsFiles(toFetch, decoder)
+      proccessedSegments = proccessedSegments.concat(toFetch)
+      sleep(maxduration)
+      reloadm3u8(maxduration, srcUrl, parser, decoder, toFetch)
     })
 }
 
@@ -133,7 +131,7 @@ function main(): void {
     })
     .then((res) => {
       parser.push(res.data)
-      //console.log(parser.manifest.targetDuration)
+      console.log(parser.manifest.targetDuration)
       //メインスレッドと別なメモリ空間でparserのインスタンスが管理されていてparser.push()をコールすると
       //こちらでgetTsFileがコールされる前にコールされた場合getTsFileに不正な引数が入る
       const fetchedSegments = parser.manifest.segments
@@ -141,7 +139,7 @@ function main(): void {
       // console.log(segments)
       getTsFiles(segments, decoder)
       const proccessedSegments = segments
-      //sleep(parser.manifest.targetDuration)
+      sleep(parser.manifest.targetDuration)
       reloadm3u8(
         parser.manifest.targetDuration,
         srcUrl,
