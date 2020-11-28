@@ -4,6 +4,10 @@ import axios from 'axios'
 import { sleep } from './../../utils'
 import { segment } from './../../interfaces'
 import { Decoder } from 'ts-coder'
+import * as log4js from 'log4js'
+
+const logger = log4js.getLogger()
+logger.level = 'all'
 
 export class Hls {
   m3u8url: string
@@ -31,7 +35,7 @@ export class Hls {
       this.baseurl = baseUrl
     }
     this.decoder.onData((buffer) => {
-      console.log(buffer)
+      logger.debug(buffer)
       const arrayBuffed = new Uint8Array(buffer)
       fs.writeFileSync(`test${this.picsnum}.jpg`, arrayBuffed)
       this.picsnum++
@@ -66,7 +70,6 @@ export class Hls {
   }
 
   async getTsFiles(segments: Array<segment>): Promise<void> {
-    //console.log(this.segments)
     for (const segment of segments) {
       //console.log(segments)
       const url = this.baseurl + segment.uri
@@ -77,6 +80,7 @@ export class Hls {
           headers: { 'content-Type': 'video/mp2t' },
         })
         //console.log(segment.uri)
+        logger.debug(segment.uri)
         this.parseTsFile(res.data)
       } catch (err) {
         console.error(err)
@@ -84,34 +88,31 @@ export class Hls {
     }
   }
 
-  removeResolved(segments: Array<segment>): Array<segment> {
-    const removed: Array<segment> = []
-    for (const index in segments) {
-      if (!(segments[index] === this.resolved[index])) {
-        removed.push(segments[index])
-      }
-    }
-    return removed
+  recurrentLoadm3u8(): void {
+    setInterval(
+      () => this.initLoadm3u8(),
+      this.parser.manifest.targetDuration * 1000
+    )
   }
 
-  loadm3u8(): void {
+  initLoadm3u8(): void {
     axios
       .get<string>(this.m3u8url, {
         headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
       })
       .then((res) => {
         this.parser.push(res.data)
-        const segments = this.parser.manifest.segments
+        const segments = this.deleteDuplication(this.parser.manifest.segments)
         //console.log(this.parser.manifest.mediaSequence)
         //console.log(segments)
         if (this.parser.manifest.mediaSequence > this.currentMediaSequence) {
           this.getTsFiles(segments)
         } else if (typeof this.currentMediaSequence === 'undefined') {
-          console.log(this.currentMediaSequence)
+          //logger.debug(segments)
           this.getTsFiles(segments)
         }
         this.currentMediaSequence = this.parser.manifest.mediaSequence
-        sleep(this.parser.manifest.targetDuration)
+        //sleep(this.parser.manifest.targetDuration)
         //this.loadm3u8()
       })
       .catch((err) => console.log(err))

@@ -152,7 +152,8 @@ function main(): void {
     'http://localhost:3000/main.m3u8',
     'http://localhost:3000/'
   )
-  client.loadm3u8()
+  client.initLoadm3u8()
+  client.recurrentLoadm3u8()
 }
 
 main()
