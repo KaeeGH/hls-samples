@@ -5,6 +5,7 @@ import axios from 'axios'
 import { sleep } from './utils'
 import { segment } from './interfaces'
 import { Encoder, Decoder } from 'ts-coder'
+import { Hls } from './classes'
 
 function writeBinFile(payload: ArrayBuffer, count: number) {
   const arrayBuffed = new Uint8Array(payload)
@@ -104,51 +105,54 @@ function reloadm3u8(
 }
 
 function main(): void {
-  const srcUrl = 'http://localhost:3000/main.m3u8'
-  let count = 0
-  const parser = new Parser()
-  const decoder = new Decoder({
-    headSize: 4,
-    isEnd(head) {
-      if (head[0] === 0x02) {
-        return true
-      } else {
-        return false
-      }
-    },
-  })
-
-  decoder.onData((buffer) => {
-    console.log(buffer)
-    const arrayBuffed = new Uint8Array(buffer)
-    fs.writeFileSync(`test${count}.jpg`, arrayBuffed)
-    count++
-  })
-
-  axios
-    .get<string>(srcUrl, {
-      headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
-    })
-    .then((res) => {
-      parser.push(res.data)
-      console.log(parser.manifest.targetDuration)
-      //メインスレッドと別なメモリ空間でparserのインスタンスが管理されていてparser.push()をコールすると
-      //こちらでgetTsFileがコールされる前にコールされた場合getTsFileに不正な引数が入る
-      const fetchedSegments = parser.manifest.segments
-      const segments: Array<segment> = deleteDuplication(fetchedSegments)
-      // console.log(segments)
-      getTsFiles(segments, decoder)
-      const proccessedSegments = segments
-      sleep(parser.manifest.targetDuration)
-      reloadm3u8(
-        parser.manifest.targetDuration,
-        srcUrl,
-        parser,
-        decoder,
-        proccessedSegments
-      )
-    })
-    .catch((err) => console.log(err))
+  // const srcUrl = 'http://localhost:3000/main.m3u8'
+  // let count = 0
+  // const parser = new Parser()
+  // const decoder = new Decoder({
+  //   headSize: 4,
+  //   isEnd(head) {
+  //     if (head[0] === 0x02) {
+  //       return true
+  //     } else {
+  //       return false
+  //     }
+  //   },
+  // })
+  // decoder.onData((buffer) => {
+  //   console.log(buffer)
+  //   const arrayBuffed = new Uint8Array(buffer)
+  //   fs.writeFileSync(`test${count}.jpg`, arrayBuffed)
+  //   count++
+  // })
+  // axios
+  //   .get<string>(srcUrl, {
+  //     headers: { 'content-Type': 'application/vnd.apple.mpegurl' },
+  //   })
+  //   .then((res) => {
+  //     parser.push(res.data)
+  //     console.log(parser.manifest.targetDuration)
+  //     //メインスレッドと別なメモリ空間でparserのインスタンスが管理されていてparser.push()をコールすると
+  //     //こちらでgetTsFileがコールされる前にコールされた場合getTsFileに不正な引数が入る
+  //     const fetchedSegments = parser.manifest.segments
+  //     const segments: Array<segment> = deleteDuplication(fetchedSegments)
+  //     // console.log(segments)
+  //     getTsFiles(segments, decoder)
+  //     const proccessedSegments = segments
+  //     sleep(parser.manifest.targetDuration)
+  //     reloadm3u8(
+  //       parser.manifest.targetDuration,
+  //       srcUrl,
+  //       parser,
+  //       decoder,
+  //       proccessedSegments
+  //     )
+  //   })
+  //   .catch((err) => console.log(err))
+  const client = new Hls(
+    'http://localhost:3000/main.m3u8',
+    'http://localhost:3000/'
+  )
+  client.loadm3u8()
 }
 
 main()
