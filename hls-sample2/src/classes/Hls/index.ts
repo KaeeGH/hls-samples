@@ -1,7 +1,6 @@
 import { Parser } from 'm3u8-parser'
 import * as fs from 'fs'
 import axios from 'axios'
-import { sleep } from './../../utils'
 import { segment } from './../../interfaces'
 import { Decoder } from 'ts-coder'
 import * as log4js from 'log4js'
@@ -71,15 +70,12 @@ export class Hls {
 
   async getTsFiles(segments: Array<segment>): Promise<void> {
     for (const segment of segments) {
-      //console.log(segments)
       const url = this.baseurl + segment.uri
-      //console.log(url)
       try {
         const res = await axios.get(url, {
           responseType: 'arraybuffer',
           headers: { 'content-Type': 'video/mp2t' },
         })
-        //console.log(segment.uri)
         logger.debug(segment.uri)
         this.parseTsFile(res.data)
       } catch (err) {
@@ -103,17 +99,12 @@ export class Hls {
       .then((res) => {
         this.parser.push(res.data)
         const segments = this.deleteDuplication(this.parser.manifest.segments)
-        //console.log(this.parser.manifest.mediaSequence)
-        //console.log(segments)
         if (this.parser.manifest.mediaSequence > this.currentMediaSequence) {
           this.getTsFiles(segments)
         } else if (typeof this.currentMediaSequence === 'undefined') {
-          //logger.debug(segments)
           this.getTsFiles(segments)
         }
         this.currentMediaSequence = this.parser.manifest.mediaSequence
-        //sleep(this.parser.manifest.targetDuration)
-        //this.loadm3u8()
       })
       .catch((err) => console.log(err))
   }
